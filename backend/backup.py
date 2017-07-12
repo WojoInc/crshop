@@ -1,7 +1,13 @@
 import psutil as put
+import shutil as sh
 import ctypes
 import os
+from os.path import getsize, join
 from enum import Enum
+
+
+class Filesystem(Enum):
+    EXT4 = "Linux EXT4"
 
 
 def mount(device, mntpnt, fs, options=''):
@@ -12,6 +18,10 @@ def mount(device, mntpnt, fs, options=''):
                            format(device, fs, mntpnt, options, os.strerror(errno)))
 
 
+def backup(mntpnt, backup_loc):
+    sh.copytree(mntpnt, backup_loc)
+
+
 def get_fs_type_desc(type):
     for desc in Filesystem:
         if desc.name == str(type).upper():
@@ -19,17 +29,10 @@ def get_fs_type_desc(type):
     return type
 
 
-class Filesystem(Enum):
-    EXT4 = "Linux EXT4"
+def get_devices():
+    dps = put.disk_partitions()
 
-dps = put.disk_partitions()
-
-parts = []
-
-fmt_str = "{:<8} {:<7}"
-print(fmt_str.format("Drive", "Types"))
-
-for part in dps:
-    parts.append((part.device, get_fs_type_desc(part.fstype)))
-for part in parts:
-    print(fmt_str.format(part[0], part[1]))
+    parts = []
+    for part in dps:
+        parts.append(('' + part.device + ": " + get_fs_type_desc(part.fstype), (part.device, part.fstype)))
+    return parts
