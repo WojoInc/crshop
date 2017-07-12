@@ -3,17 +3,13 @@ __author__ = "Meme_master_69"
 import psutil
 from tkinter import *
 from tkinter import ttk
+from backend import backup
 
 dps = psutil.disk_partitions()
 
 
 def placeholder():  # TODO
     pass
-
-
-def close(val=False):
-    if val is True:
-        exit(0)
 
 
 mainwindow = Tk()   # The main window for the program options to run in
@@ -37,10 +33,23 @@ mainwindow.config(menu=menubar)  # Packs the menubar
 tabs = ttk.Notebook(mainwindow)  # Create tabs for different options
 backuptab = ttk.Frame(tabs, height=400, width=800)
 # TODO add widgets for backup
+# Create entry for ticket number
 ticketlabel = Label(backuptab, text="Ticket #:")
-ticketlabel.pack(side=LEFT)
+ticketlabel.grid(row=0, column=0)
 ticketentry = Entry(backuptab, bd=4)
-ticketentry.pack(side=LEFT, fill="x")
+ticketentry.grid(row=0, column=1)
+
+driveoptions = StringVar(backuptab)
+tempoptions = {"This", "are", "some", "options"}
+devices = backup.get_devices()
+devicelist = []
+for device in devices:
+    devicelist.append(device[0])
+
+driveentry = OptionMenu(backuptab, driveoptions, *devicelist)
+drivelabel = Label(backuptab, text="Select Drive:")
+drivelabel.grid(row=0, column=2)
+driveentry.grid(row=0, column=3)
 
 restoretab = ttk.Frame(tabs, height=400, width=800)
 # TODO add widgets for restore
