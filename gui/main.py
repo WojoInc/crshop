@@ -2,17 +2,36 @@ import psutil
 from tkinter import *
 from tkinter import ttk
 from backend import backup
+import threading
+from gui import newwindows
 
 __author__ = "Meme_master_69"
 
 dps = psutil.disk_partitions()
 
 
-def placeholder():
+def placeholder():  # Delte this
     pass
+
+
+def runbackup(mntpnt="/root/", backup_loc="/root/Desktop"):
+    window = Toplevel()
+    window.title("Info")
+    global errorlog
+    errorlog = ""
+    errors = Label(window, errorlog, height=36, width=50)
+    errors.pack()
+
+    threading._start_new_thread(backup.backup, (mntpnt, backup_loc, errors))
+
+
+def runrestore():
+    pass
+
 
 def changeqnap():  # TODO
     pass
+
 
 def helpwindow():  # TODO
     pass
@@ -60,7 +79,7 @@ drivelabel = Label(backuptab, text="Select Drive:")
 drivelabel.grid(row=0, column=2)
 driveentry.grid(row=0, column=3)
 
-startbutton = Button(backuptab, text="Start Backup", command=placeholder())
+startbutton = Button(backuptab, text="Start Backup", command=lambda: runbackup())
 startbutton.grid(row=1, column=1)
 
 
@@ -83,6 +102,9 @@ driveentry = OptionMenu(restoretab, driveoptions, *devicelist)
 drivelabel = Label(restoretab, text="Select Drive:")
 drivelabel.grid(row=0, column=2)
 driveentry.grid(row=0, column=3)
+
+startbutton = Button(restoretab, text="Start Restore", command=lambda: runrestore())
+startbutton.grid(row=1, column=1)
 
 tabs.add(backuptab, text="Backup")
 tabs.add(restoretab, text="Restore")

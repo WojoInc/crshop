@@ -3,6 +3,7 @@ import shutil as sh
 import ctypes
 import os
 from enum import Enum
+from tkinter import *
 
 
 class Filesystem(Enum):
@@ -17,40 +18,49 @@ def mount(device, mntpnt, fs, options=''):
                            format(device, fs, mntpnt, options, os.strerror(errno)))
 
 
-def backup(mntpnt, backup_loc):
-    # sh.copytree(mntpnt, backup_loc)
-    dirs = os.listdir(mntpnt)
-    if os.path.exists(backup_loc) is False:
-        os.makedirs(backup_loc)
-    for dir in dirs:
-        srcname = os.path.join(mntpnt, dir)
-        dstname = os.path.join(backup_loc, dir)
+def backup(mntpnt, backup_loc, errors):
+    errorlog = ""
 
-        try:
-            if os.path.isdir(srcname):
-                backup(srcname, dstname)
-            elif os.path.isfile(srcname):
-                if os.path.exists(dstname):
-                    print("Error. File { " + dstname + " } already exists")
-                else:
-                    sh.copy2(srcname, dstname)
-        except (IOError, os.error) as ex:
-            # TODO add function to update error window
-            print(ex)
-        except sh.Error as ex:
-            # TODO add function to update error window
-            print(ex)
-        try:
-            sh.copystat(mntpnt, backup_loc)
-        except WindowsError:
-            pass
-        except OSError as ex:
-            # TODO add function to update error window
-            print(ex)
-    else:
-        print("Error. Directory { " + backup_loc + " } already exists")
+    def adderror(errorlog, errors):
+        errors.configure(text=errorlog)
+        errors.pack()
 
+    try:
+        dirs = os.listdir(mntpnt)
+        if os.path.exists(backup_loc) is False:
+            os.makedirs(backup_loc)
+        for dir in dirs:
+            srcname = os.path.join(mntpnt, dir)
+            dstname = os.path.join(backup_loc, dir)
 
+            try:
+                if os.path.isdir(srcname):
+                    backup(srcname, dstname, errors)
+                elif os.path.isfile(srcname):
+                    if os.path.exists(dstname):
+                        errorlog += ("Error. File { " + dstname + " } already exists/n")
+                        adderror(errorlog, errors)
+                    else:
+                        sh.copy2(srcname, dstname)
+            except (IOError, os.error) as ex:
+                errorlog += ex.strerror + "/n"
+                adderror(errorlog, errors)
+            except sh.Error as ex:
+                errorlog += ex.strerror + "/n"
+                adderror(errorlog, errors)
+            try:
+                sh.copystat(mntpnt, backup_loc)
+            except WindowsError:
+                pass
+            except OSError as ex:
+                errorlog += ex.strerror + "/n"
+                adderror(errorlog, errors)
+        else:
+            errorlog += ("Error. Directory { " + backup_loc + " } already exists/n")
+            adderror(errorlog, errors)
+    except PermissionError as ex:
+        errorlog += ("Insufficient permission to access { " + backup_loc + " }/n")
+        adderror(errorlog, errors)
 
 def get_fs_type_desc(type):
     for desc in Filesystem:
@@ -66,7 +76,3 @@ def get_devices():
     for part in dps:
         parts.append(('' + part.device + ": " + get_fs_type_desc(part.fstype), (part.device, part.fstype)))
     return parts
-
-
-print(backup("/root/Test1/", "/root/Test2/"))
-
