@@ -19,10 +19,11 @@ def mount(device, mntpnt, fs, options=''):
 
 
 def backup(mntpnt, backup_loc, errors):
+    # TODO prevent overwriting over existing root folder
     errorlog = ""
 
-    def adderror(errorlog, errors):
-        errors.configure(text=errorlog)
+    def adderror(error, errors):
+        errors.insert(INSERT, error + "\n")
         errors.pack()
 
     try:
@@ -38,29 +39,24 @@ def backup(mntpnt, backup_loc, errors):
                     backup(srcname, dstname, errors)
                 elif os.path.isfile(srcname):
                     if os.path.exists(dstname):
-                        errorlog += ("Error. File { " + dstname + " } already exists/n")
-                        adderror(errorlog, errors)
+                        adderror("Error. File { " + dstname + " } already exists", errors)
                     else:
                         sh.copy2(srcname, dstname)
             except (IOError, os.error) as ex:
-                errorlog += ex.strerror + "/n"
-                adderror(errorlog, errors)
+                adderror("Insufficient permission to access { " + dstname + " }", errors)
             except sh.Error as ex:
-                errorlog += ex.strerror + "/n"
-                adderror(errorlog, errors)
+                adderror(ex.strerror + "When will you learn?", errors)
             try:
                 sh.copystat(mntpnt, backup_loc)
             except WindowsError:
                 pass
             except OSError as ex:
-                errorlog += ex.strerror + "/n"
-                adderror(errorlog, errors)
+                adderror(ex.strerror, errors)
         else:
-            errorlog += ("Error. Directory { " + backup_loc + " } already exists/n")
-            adderror(errorlog, errors)
+            adderror("Error. Directory { " + backup_loc + " } already exists", errors)
     except PermissionError as ex:
-        errorlog += ("Insufficient permission to access { " + backup_loc + " }/n")
-        adderror(errorlog, errors)
+
+        adderror("Insufficient permission to access { " + backup_loc + " }", errors)
 
 def get_fs_type_desc(type):
     for desc in Filesystem:
@@ -74,5 +70,5 @@ def get_devices():
 
     parts = []
     for part in dps:
-        parts.append(('' + part.device + ": " + get_fs_type_desc(part.fstype), (part.device, part.fstype)))
+        parts.append(('' + part.device + ": " + get_fs_type_desc(part.fstype), part.device, part.fstype))
     return parts

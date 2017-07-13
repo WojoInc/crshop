@@ -3,23 +3,22 @@ from tkinter import *
 from tkinter import ttk
 from backend import backup
 import threading
-from gui import newwindows
 
 __author__ = "Meme_master_69"
 
-dps = psutil.disk_partitions()
 
 
 def placeholder():  # Delte this
     pass
 
 
-def runbackup(mntpnt="/root/", backup_loc="/root/Desktop"):
+def runbackup(mntpnt, backup_loc="/home/crshop/backup_test"):
+    print(mntpnt)
     window = Toplevel()
     window.title("Info")
     global errorlog
     errorlog = ""
-    errors = Label(window, errorlog, height=36, width=50)
+    errors = Text(window, errorlog, height=36, width=100, state=NORMAL)
     errors.pack()
 
     threading._start_new_thread(backup.backup, (mntpnt, backup_loc, errors))
@@ -36,6 +35,9 @@ def changeqnap():  # TODO
 def helpwindow():  # TODO
     pass
 
+
+def setdevice(value):
+    selected_device = value
 
 mainwindow = Tk()   # The main window for the program options to run in
 mainwindow.title("ITS Backup Superscript")
@@ -66,6 +68,10 @@ ticketlabel.grid(row=0, column=0)
 ticketentry = Entry(backuptab, bd=4)
 ticketentry.grid(row=0, column=1)
 
+selected_device = StringVar(backuptab)
+radio_sel = StringVar(backuptab)
+
+
 # Create drop-down for drive list
 driveoptions = StringVar(backuptab)
 tempoptions = {"This", "are", "some", "options"}
@@ -74,13 +80,27 @@ devicelist = []
 for device in devices:  # Retrives the first part of devices from backup.py
     devicelist.append(device[0])
 
-driveentry = OptionMenu(backuptab, driveoptions, *devicelist)
+driveentry = OptionMenu(backuptab, driveoptions, *devicelist, command=setdevice)
 drivelabel = Label(backuptab, text="Select Drive:")
-drivelabel.grid(row=0, column=2)
-driveentry.grid(row=0, column=3)
+drivelabel.grid(row=1, column=0)
+driveentry.grid(row=1, column=1)
 
-startbutton = Button(backuptab, text="Start Backup", command=lambda: runbackup())
-startbutton.grid(row=1, column=1)
+# Radio buttons for selecting folder to
+
+R1 = Radiobutton(backuptab, text="Whole drive", variable=radio_sel, value="/")
+R1.grid(row=0, column=2)
+
+R2 = Radiobutton(backuptab, text="Users Folder", variable=radio_sel, value="/Users/")
+R2.grid(row=1, column=2)
+
+R4 = Radiobutton(backuptab, text="Other:", variable=radio_sel, value="")  # TODO add other text box
+R4.grid(row=2, column=2)
+
+otherentry = Text(backuptab, height=1, width=35)
+otherentry.grid(row=2, column=3)
+
+startbutton = Button(backuptab, text="Start Backup", command=lambda: runbackup(str(radio_sel.get())))
+startbutton.grid(row=5, column=3, padx=5, pady=15)
 
 
 restoretab = ttk.Frame(tabs, height=400, width=800)  # Tab with options for restoring
