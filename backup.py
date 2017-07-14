@@ -30,6 +30,8 @@ def backup(mntpnt, backup_loc, errors):
         dirs = os.listdir(mntpnt)
         if os.path.exists(backup_loc) is False:
             os.makedirs(backup_loc)
+        else:
+            adderror("Error. Directory { " + backup_loc + " } already exists", errors)
         for dir in dirs:
             srcname = os.path.join(mntpnt, dir)
             dstname = os.path.join(backup_loc, dir)
@@ -52,8 +54,7 @@ def backup(mntpnt, backup_loc, errors):
                 pass
             except OSError as ex:
                 adderror(ex.strerror, errors)
-        else:
-            adderror("Error. Directory { " + backup_loc + " } already exists", errors)
+
     except PermissionError as ex:
 
         adderror("Insufficient permission to access { " + backup_loc + " }", errors)
@@ -65,13 +66,13 @@ def get_fs_type_desc(type):
     return type
 
 
-
 def get_devices():
-    dps = put.disk_partitions()
     devices = ptd.getAllDevices()
     disks = []
     parts = []
     drv_info = []
+    if len(devices) == 0:
+        return " ", " ", " "
     for device in devices:
         disks.append(ptd.Disk(device))
     for disk in disks:

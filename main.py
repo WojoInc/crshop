@@ -1,19 +1,24 @@
-import psutil
+import configparser
+import os
+import threading
 from tkinter import *
 from tkinter import ttk
-from backend import backup
-import threading
-
+import backup
+from subprocess import call
 __author__ = "Meme_master_69"
 
+config = configparser.ConfigParser()
+configdir = os.path.expanduser("~")
+configdir += "/.backup_superscript/"
+configfile = "config.ini"
 
 
 def placeholder():  # Delte this
     pass
 
 
-def runbackup(mntpnt, backup_loc="/home/crshop/backup_test"):
-    print(mntpnt)
+def runbackup(device, fs, src_path, backup_loc="/home/crshop/backup_test"):
+    # backup.mount(device, "/mnt/"+"source", fs)
     window = Toplevel()
     window.title("Info")
     global errorlog
@@ -21,7 +26,7 @@ def runbackup(mntpnt, backup_loc="/home/crshop/backup_test"):
     errors = Text(window, errorlog, height=36, width=100, state=NORMAL)
     errors.pack()
 
-    threading._start_new_thread(backup.backup, (mntpnt, backup_loc, errors))
+    threading._start_new_thread(backup.backup, ("/media/crshop/CENA_X64FREV_EN-US_DV5" + src_path, backup_loc, errors))
 
 
 def runrestore():
@@ -39,6 +44,21 @@ def helpwindow():  # TODO
 def setdevice(value):
     selected_device = value
 
+
+def changeQNAP(value):
+    pass
+
+
+# Check for config.ini and create one if there is none
+try:
+    config.read_file(open(configdir + configfile))
+except FileNotFoundError:
+    config["QNAP"] = {"Current QNAP": "1"}
+    os.makedirs(configdir)
+    with open(configdir + configfile, "w+") as filetowrite:
+        config.write(filetowrite)
+
+# Create the window
 mainwindow = Tk()   # The main window for the program options to run in
 mainwindow.title("ITS Backup Superscript")
 menubar = Menu(mainwindow)  # Space for the drop-down file menu from the top
@@ -52,8 +72,14 @@ menubar.add_cascade(label="File", menu=filemenu)
 
 # "Advanced" cascade menu
 advmenu = Menu(menubar, tearoff=0)
-advmenu.add_command(label="Change QNAP", command=changeqnap())
 advmenu.add_command(label="About", command=helpwindow())
+
+# Qnap radio buttons inside the advanced menu
+selected_qnap = IntVar()  # TODO store and pull last used QNAP
+qnapmenu = Menu(advmenu, tearoff=0)
+qnapmenu.add_radiobutton(label="QNAP_1", variable=selected_qnap, value=1, command=changeQNAP(selected_qnap))
+qnapmenu.add_radiobutton(label="QNAP_2", variable=selected_qnap, value=2)
+advmenu.add_cascade(label="Change QNAP", menu=qnapmenu)
 menubar.add_cascade(label="Advanced", menu=advmenu)
 
 mainwindow.config(menu=menubar)  # Packs the menubar
@@ -61,26 +87,33 @@ mainwindow.config(menu=menubar)  # Packs the menubar
 
 tabs = ttk.Notebook(mainwindow)  # Create tabs for different options
 backuptab = ttk.Frame(tabs, height=400, width=800)  # Tab with options for backup
-# TODO add widgets for backup
+
 # Create entry for ticket number
 ticketlabel = Label(backuptab, text="Ticket #:")
 ticketlabel.grid(row=0, column=0)
 ticketentry = Entry(backuptab, bd=4)
 ticketentry.grid(row=0, column=1)
 
-selected_device = StringVar(backuptab)
+selected_device = ()
 radio_sel = StringVar(backuptab)
 
 
 # Create drop-down for drive list
 driveoptions = StringVar(backuptab)
-tempoptions = {"This", "are", "some", "options"}
 devices = backup.get_devices()
-devicelist = []
-for device in devices:  # Retrives the first part of devices from backup.py
-    devicelist.append(device[0])
+devicedict = {}
 
-driveentry = OptionMenu(backuptab, driveoptions, *devicelist, command=setdevice)
+for device in devices:  # Retrives the first part of devices from backup.py
+    devicedict[device[0]] = device
+
+
+def drive_select(value):
+    print(devicedict[value])
+    global selected_device
+    selected_device = devicedict[value]
+
+
+driveentry = OptionMenu(backuptab, driveoptions, *devicedict, command=drive_select)
 drivelabel = Label(backuptab, text="Select Drive:")
 drivelabel.grid(row=1, column=0)
 driveentry.grid(row=1, column=1)
@@ -93,18 +126,19 @@ R1.grid(row=0, column=2)
 R2 = Radiobutton(backuptab, text="Users Folder", variable=radio_sel, value="/Users/")
 R2.grid(row=1, column=2)
 
-R4 = Radiobutton(backuptab, text="Other:", variable=radio_sel, value="")  # TODO add other text box
-R4.grid(row=2, column=2)
+R3 = Radiobutton(backuptab, text="Other:", variable=radio_sel, value="")  # TODO add other text box
+R3.grid(row=2, column=2)
 
 otherentry = Text(backuptab, height=1, width=35)
 otherentry.grid(row=2, column=3)
 
-startbutton = Button(backuptab, text="Start Backup", command=lambda: runbackup(str(radio_sel.get())))
+startbutton = Button(backuptab, text="Start Backup", command=lambda:
+runbackup(selected_device[1], selected_device[2], radio_sel.get()))
+
 startbutton.grid(row=5, column=3, padx=5, pady=15)
 
 
 restoretab = ttk.Frame(tabs, height=400, width=800)  # Tab with options for restoring
-# TODO add widgets for restore
 # Create entry for ticket number
 ticketlabel = Label(restoretab, text="Ticket #:")
 ticketlabel.grid(row=0, column=0)
