@@ -4,7 +4,7 @@ import ctypes
 import os
 from enum import Enum
 from tkinter import *
-
+import parted as ptd
 
 class Filesystem(Enum):
     EXT4 = "Linux EXT4"
@@ -65,10 +65,17 @@ def get_fs_type_desc(type):
     return type
 
 
+
 def get_devices():
     dps = put.disk_partitions()
-
+    devices = ptd.getAllDevices()
+    disks = []
     parts = []
-    for part in dps:
-        parts.append(('' + part.device + ": " + get_fs_type_desc(part.fstype), part.device, part.fstype))
-    return parts
+    drv_info = []
+    for device in devices:
+        disks.append(ptd.Disk(device))
+    for disk in disks:
+        parts = disk.partitions
+    for part in parts:
+        drv_info.append((part.path, part.type, part.name))
+    return drv_info
