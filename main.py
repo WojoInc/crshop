@@ -3,8 +3,9 @@ import os
 import threading
 from tkinter import *
 from tkinter import ttk
+
 import backup
-from subprocess import call
+
 __author__ = "Meme_master_69"
 
 config = configparser.ConfigParser()
@@ -112,8 +113,8 @@ devices = backup.get_devices()
 devicedict = {}
 
 for device in devices:  # Retrives the first part of devices from backup.py
-    devicedict[device[0]] = device
-    # devicedict[device[0] + " " + str(device[1]) + " " + str(device[2])] = device
+    # devicedict[device[0]] = device
+    devicedict[device[0] + " " + str(device[1]) + " " + str(device[2])] = device
 
 
 def drive_select(value):

@@ -1,10 +1,11 @@
-import psutil as put
 import shutil as sh
 import ctypes
 import os
+import shutil as sh
+import subprocess as sub
 from enum import Enum
 from tkinter import *
-import parted as ptd
+
 
 class Filesystem(Enum):
     EXT4 = "Linux EXT4"
@@ -67,16 +68,42 @@ def get_fs_type_desc(type):
 
 
 def get_devices():
-    devices = ptd.getAllDevices()
-    disks = []
-    parts = []
-    drv_info = []
-    if len(devices) == 0:
-        return " ", " ", " "
-    for device in devices:
-        disks.append(ptd.Disk(device))
-    for disk in disks:
-        parts = disk.partitions
-        for part in parts:
-            drv_info.append((part.path, part.type, part.name))
-    return drv_info
+    # Get the list of partitions from fdisk
+    fdisk = sub.Popen(["fdisk", "-l", "-o", "DEVICE"], stdout=sub.PIPE)
+    output, err = fdisk.communicate()
+    # decode binary data into string
+    output = output.decode('ASCII')
+    # split output by the return character
+    output = output.split("\n")
+    # discard unneeded output, keep only the list of drives
+    devices = output[8:-3]
+
+    fdisk = sub.Popen(["fdisk", "-l", "-o", "SIZE"], stdout=sub.PIPE)
+    output, err = fdisk.communicate()
+    # decode binary data into string
+    output = output.decode('ASCII')
+    # split output by the return character
+    output = output.split("\n")
+    # discard unneeded output, keep only the list of drives
+    sizes = output[8:-3]
+
+    fdisk = sub.Popen(["fdisk", "-l", "-o", "TYPE"], stdout=sub.PIPE)
+    output, err = fdisk.communicate()
+    # decode binary data into string
+    output = output.decode('ASCII')
+    # split output by the return character
+    output = output.split("\n")
+    # discard unneeded output, keep only the list of drives
+    types = output[8:-3]
+
+    fdisk = sub.Popen(["fdisk", "-l", "-o", "UUID"], stdout=sub.PIPE)
+    output, err = fdisk.communicate()
+    # decode binary data into string
+    output = output.decode('ASCII')
+    # split output by the return character
+    output = output.split("\n")
+    # discard unneeded output, keep only the list of drives
+    uuids = output[8:-3]
+
+    return devices, sizes, types, uuids
+print(get_devices())
