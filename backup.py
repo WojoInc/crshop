@@ -77,6 +77,6 @@ def get_devices():
         disks.append(ptd.Disk(device))
     for disk in disks:
         parts = disk.partitions
-    for part in parts:
-        drv_info.append((part.path, part.type, part.name))
+        for part in parts:
+            drv_info.append((part.path, part.type, part.name))
     return drv_info

@@ -17,8 +17,10 @@ def placeholder():  # Delte this
     pass
 
 
-def runbackup(device, fs, src_path, backup_loc="/home/crshop/backup_test"):
+def runbackup(device, fs, src_path, backup_loc=None):
     # backup.mount(device, "/mnt/"+"source", fs)
+    ticketnumber = ticketentry.get()
+    qnappath = config["QNAP"]["qnap " + str(selected_qnap.get())]
     window = Toplevel()
     window.title("Info")
     global errorlog
@@ -26,14 +28,11 @@ def runbackup(device, fs, src_path, backup_loc="/home/crshop/backup_test"):
     errors = Text(window, errorlog, height=36, width=100, state=NORMAL)
     errors.pack()
 
-    threading._start_new_thread(backup.backup, ("/media/crshop/CENA_X64FREV_EN-US_DV5" + src_path, backup_loc, errors))
+    threading._start_new_thread(backup.backup, (src_path, qnappath +
+                                                ticketnumber, errors))
 
 
 def runrestore():
-    pass
-
-
-def changeqnap():  # TODO
     pass
 
 
@@ -46,14 +45,19 @@ def setdevice(value):
 
 
 def changeQNAP(value):
-    pass
+    config.set("QNAP", "current qnap", str(value.get()))
+    print(value.get())
+    with open(configdir + configfile, "w+") as filetochange:
+        config.write(filetochange)
 
 
 # Check for config.ini and create one if there is none
 try:
     config.read_file(open(configdir + configfile))
 except FileNotFoundError:
-    config["QNAP"] = {"Current QNAP": "1"}
+    config["QNAP"] = {"Current QNAP": "1",
+                      "QNAP 1": "\"/media/crshop/QNAP-1/\"",
+                      "QNAP 2": "\"/media/crshop/QNAP-2/\""}
     os.makedirs(configdir)
     with open(configdir + configfile, "w+") as filetowrite:
         config.write(filetowrite)
@@ -75,12 +79,16 @@ advmenu = Menu(menubar, tearoff=0)
 advmenu.add_command(label="About", command=helpwindow())
 
 # Qnap radio buttons inside the advanced menu
-selected_qnap = IntVar()  # TODO store and pull last used QNAP
+selected_qnap = IntVar()  # stores and pulls last used QNAP
+print(config["QNAP"]["current qnap"])
+selected_qnap.set(int(config["QNAP"]["current qnap"]))
+
 qnapmenu = Menu(advmenu, tearoff=0)
-qnapmenu.add_radiobutton(label="QNAP_1", variable=selected_qnap, value=1, command=changeQNAP(selected_qnap))
-qnapmenu.add_radiobutton(label="QNAP_2", variable=selected_qnap, value=2)
+qnapmenu.add_radiobutton(label="QNAP_1", variable=selected_qnap, value=1, command=lambda: changeQNAP(selected_qnap))
+qnapmenu.add_radiobutton(label="QNAP_2", variable=selected_qnap, value=2, command=lambda: changeQNAP(selected_qnap))
 advmenu.add_cascade(label="Change QNAP", menu=qnapmenu)
 menubar.add_cascade(label="Advanced", menu=advmenu)
+
 
 mainwindow.config(menu=menubar)  # Packs the menubar
 
@@ -105,6 +113,7 @@ devicedict = {}
 
 for device in devices:  # Retrives the first part of devices from backup.py
     devicedict[device[0]] = device
+    # devicedict[device[0] + " " + str(device[1]) + " " + str(device[2])] = device
 
 
 def drive_select(value):
@@ -132,7 +141,7 @@ R3.grid(row=2, column=2)
 otherentry = Text(backuptab, height=1, width=35)
 otherentry.grid(row=2, column=3)
 
-startbutton = Button(backuptab, text="Start Backup", command=lambda:
+startbutton = Button(backuptab, text="Start Backup on QNAP-" + str(selected_qnap.get()), command=lambda:
 runbackup(selected_device[1], selected_device[2], radio_sel.get()))
 
 startbutton.grid(row=5, column=3, padx=5, pady=15)
