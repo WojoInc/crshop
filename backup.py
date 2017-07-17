@@ -1,4 +1,3 @@
-import shutil as sh
 import ctypes
 import os
 import shutil as sh
@@ -104,6 +103,7 @@ def get_devices():
     output = output.split("\n")
     # discard unneeded output, keep only the list of drives
     uuids = output[8:-3]
+    output = list(zip(devices, sizes, types, uuids))
+    return output
 
-    return devices, sizes, types, uuids
 print(get_devices())
