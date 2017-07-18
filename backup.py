@@ -69,13 +69,14 @@ def get_fs_type_desc(type):
 def get_devices():
     """
     Returns the available partitions known to the kernel
-    :return: a tuple, (/dev/sdX#, fs, size, name/ if applicable)
+    :return: a tuple, (/dev/sdX#, fs, size, name/ if applicable) or
+    returns a tuple " ", " ", " ", " " if not run as root
     """
     devices = ptd.getAllDevices()
     disks = []
     drv_info = []
     if len(devices) == 0:
-        return " ", " ", " ", " "
+        return [(" ", " ", " ", " ")]
     for device in devices:
         disks.append(ptd.Disk(device))
     for disk in disks:
