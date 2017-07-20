@@ -24,7 +24,8 @@ def drive_select(value):  # Changes selected_device after user inputs
     selected_device = devicedict[value]
 
 
-def runbackup(device, fs, ticketnum, backup_loc=None):
+def runbackup(device, fs, backup_loc=None):
+    ticketnum = ticketentry.get()
     backup.mount_disk(device, "/media/crshop/source", fs)
     print(ticketnum)
     if ticketnum is "":  # If nothing entered, return error
@@ -156,6 +157,7 @@ drivelabel = Label(backuptab, text="Select Drive:")
 drivelabel.grid(row=1, column=0)
 driveentry.grid(row=1, column=1)
 
+
 # Radio buttons for selecting folder to backup
 R1 = Radiobutton(backuptab, text="Whole drive", variable=radio_sel, value="/")
 R1.grid(row=0, column=2)
@@ -171,7 +173,7 @@ otherentry.grid(row=2, column=3)
 
 # The start button
 startbutton = Button(backuptab, textvariable=startbackuptext, command=lambda:
-runbackup(selected_device[0], selected_device[1], ticketentry.get(), radio_sel.get()))
+runbackup(selected_device[0], selected_device[1], radio_sel.get()))
 startbutton.grid(row=3, column=3, padx=5, pady=15)
 
 # Restoring
@@ -189,10 +191,10 @@ devicelist = []
 for device in devices:  # Retrives the first part of devices from backup.py
     devicelist.append(device[0])
 
-driveentry = OptionMenu(restoretab, driveoptions, *devicelist)
-drivelabel = Label(restoretab, text="Select Drive:")
-drivelabel.grid(row=0, column=2)
-driveentry.grid(row=0, column=3)
+driveresentry = OptionMenu(restoretab, driveoptions, *devicelist)
+drivereslabel = Label(restoretab, text="Select Drive:")
+drivereslabel.grid(row=0, column=2)
+driveresentry.grid(row=0, column=3)
 
 startbutton = Button(restoretab, text="Start Restore", command=lambda: runrestore())
 startbutton.grid(row=1, column=1)
