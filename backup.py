@@ -1,4 +1,4 @@
-import psutil as put
+from sh import mount, umount, ErrorReturnCode, mkdir
 import shutil as sh
 import ctypes
 import os
@@ -7,15 +7,35 @@ from tkinter import *
 import parted as ptd
 
 class Filesystem(Enum):
-    EXT4 = "Linux EXT4"
+    ext4 = "-t ext4"
+    ntfs = "-t ntfs-3g"
 
 
-def mount(device, mntpnt, fs, options=''):
-    res = ctypes.CDLL('libc.so.6', use_errno=True).mount(device, mntpnt, fs, 0, options)
-    if res < 0:
-        errno = ctypes.get_errno()
-        raise RuntimeError("Error mounting {} ({}) on {} with options '{}': {}".
-                           format(device, fs, mntpnt, options, os.strerror(errno)))
+def mount_disk(device, mntpnt, fs):
+    mkdir_err = False
+
+    try:
+        umount("-f", device)
+    except ErrorReturnCode as ex:
+        if "not mounted" in ex.stderr.decode():
+            pass
+
+    if fs == "ntfs":
+        fs = "-t ntfs-3g"
+
+    try:
+        mount(device, mntpnt, fs)
+    except ErrorReturnCode as  ex:
+        if "does not exist" in ex.stderr.decode():
+            mkdir(mntpnt)
+    if mkdir_err is False:
+        try:
+            mount(device, mntpnt, fs)
+        except ErrorReturnCode as  ex:
+            if "does not exist" in ex.stderr.decode():
+                mkdir(mntpnt)
+
+                # print(res)
 
 
 def backup(mntpnt, backup_loc, errors):
@@ -84,4 +104,4 @@ def get_devices():
         for part in parts:
             drv_info.append((part.path, part.fileSystem.type, part.getSize(), part.name))
     return drv_info
-print(get_devices())
+    # print(mount("/dev/sda2", "/media/crshop/Test", "ntfs"))

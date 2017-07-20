@@ -24,9 +24,10 @@ def drive_select(value):  # Changes selected_device after user inputs
     selected_device = devicedict[value]
 
 
-def runbackup(device, fs, src_path, backup_loc=None):
-    # backup.mount(device, "/mnt/"+"source", fs)
-    if ticketentry.get() is "":  # If nothing entered, return error
+def runbackup(device, fs, ticketnum, backup_loc=None):
+    backup.mount_disk(device, "/media/crshop/source", fs)
+    print(ticketnum)
+    if ticketnum is "":  # If nothing entered, return error
         errorwindow("You need to enter a ticket number")
         return
     ticketnumber = ticketentry.get()  # Gets user entry from the ticket box
@@ -38,8 +39,7 @@ def runbackup(device, fs, src_path, backup_loc=None):
     errors = Text(window, errorlog, height=36, width=100, state=NORMAL)
     errors.pack()
 
-    threading._start_new_thread(backup.backup, (src_path, qnappath +
-                                                ticketnumber, errors))
+    threading._start_new_thread(backup.backup, ("/media/crshop/source" + backup_loc, qnappath + ticketnumber, errors))
 
 
 def runrestore():
@@ -57,8 +57,7 @@ def helpwindow():  # Text pop up window with some simple info
 
 def errorwindow(message):  # Opens an error window that notifies the user of what they did wrong
     errorwindow = Toplevel(mainwindow)
-    aboutlabel = Label(errorwindow, text=""
-                                         "              ,---------------------------,\n"
+    aboutlabel = Label(errorwindow, text="              ,---------------------------,\n"
                                          "              |  /---------------------\  |\n"
                                          "              | |                       | |\n"
                                          "              | |     REEEEEEE          | |\n"
@@ -87,10 +86,10 @@ def setdevice(value):
 
 def changeQNAP(value):  # Changes Qnap to use in config file after user hits radio button
     config.set("QNAP", "current qnap", str(value.get()))
+    startbackuptext.set("Start backup on QNAP-" + str(value.get()))
     with open(configdir + configfile, "w+") as filetochange:
         config.write(filetochange)
     mainwindow.mainloop()
-
 
 
 # Check for config.ini and create one if there is none
@@ -117,6 +116,8 @@ advmenu.add_command(label="About", command=lambda: helpwindow())
 selected_qnap = IntVar()  # stores and pulls last used QNAP
 print(config["QNAP"]["current qnap"])
 selected_qnap.set(int(config["QNAP"]["current qnap"]))
+startbackuptext = StringVar()
+startbackuptext.set("Start backup on QNAP-" + str(selected_qnap.get()))
 
 qnapmenu = Menu(advmenu, tearoff=0)
 qnapmenu.add_radiobutton(label="QNAP_1", variable=selected_qnap, value=1, command=lambda: changeQNAP(selected_qnap))
@@ -131,6 +132,7 @@ tabs = ttk.Notebook(mainwindow)  # Create tabs for different options
 backuptab = ttk.Frame(tabs, height=400, width=800)  # Tab with options for backup
 
 # Create entry for ticket number
+selected_ticket = ""
 ticketlabel = Label(backuptab, text="Ticket #:")
 ticketlabel.grid(row=0, column=0)
 ticketentry = Entry(backuptab, bd=4)
@@ -167,9 +169,9 @@ R3.grid(row=2, column=2)
 otherentry = Text(backuptab, height=1, width=35)
 otherentry.grid(row=2, column=3)
 
-# The start button  TODO update button text with qnap change
-startbutton = Button(backuptab, text="Start Backup on QNAP-" + str(selected_qnap.get()), command=lambda:
-runbackup(selected_device[1], selected_device[2], radio_sel.get()))
+# The start button
+startbutton = Button(backuptab, textvariable=startbackuptext, command=lambda:
+runbackup(selected_device[0], selected_device[1], ticketentry.get(), radio_sel.get()))
 startbutton.grid(row=3, column=3, padx=5, pady=15)
 
 # Restoring
